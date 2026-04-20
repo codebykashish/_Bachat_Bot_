@@ -18,8 +18,7 @@ class BachatbotAI:
         genai.configure(api_key=api_key)
         
         # We use 'gemini-1.5-flash' because it is fast and cost-effective for chatbots
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
-        
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
         # This 'System Instruction' acts as the Bot's personality and rules.
         # It tells the AI exactly how to behave and what data format to return.
         self.system_instruction = (
@@ -42,18 +41,23 @@ class BachatbotAI:
         )
 
     def get_chat_response(self, user_input):
-        """
-        This function takes the message from the user, sends it to Gemini 
-        with the system rules, and returns the AI's text response.
-        """
-        # Combine our hidden rules with the user's actual message
-        full_prompt = f"{self.system_instruction}\n\nUser: {user_input}"
-        
-        # Generate the response using the Gemini model
-        response = self.model.generate_content(full_prompt)
-        
-        # Return the text portion of the response to the caller
-        return response.text
+        try:
+                # We use a chat session for better context if needed later, 
+                # but for now, a single call is fine.
+            full_prompt = f"{self.system_instruction}\n\nUser: {user_input}"
+            
+            response = self.model.generate_content(full_prompt)
+            
+                # Check if response has text (to avoid errors on empty/blocked responses)
+            if response and response.text:
+                return response.text
+            else:
+                return "Maile tapai ko kura bujhina. Pheri bhannus na?"
+                
+        except Exception as e:
+                # Print the error to your terminal so you can see it
+            print(f"❌ AI Error: {e}")
+            return f"Technical Error: {str(e)}"
 
 # --- LOCAL TESTING BLOCK ---
 # This part only runs if you execute 'python gemini_engine.py' directly.
