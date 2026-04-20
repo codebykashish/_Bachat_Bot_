@@ -1,67 +1,153 @@
+# database.py
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
-from dotenv import load_dotenv
-
-# Load the .env file to get the path to your serviceAccountKey.json
-load_dotenv()
+from datetime import datetime
 
 class TransactionDB:
     def __init__(self):
         """
-        Constructor: Sets up the connection to the shared Firebase project.
+        Constructor: Initializes Firebase connection using your 
+        serviceAccountKey.json file. Only initializes once to avoid errors.
         """
-        # Get the path to the JSON key Namrata gave you
-        cert_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
-        
-        # We check if the app is already initialized to prevent errors 
-        # during multiple runs or reloads.
+        # Check if Firebase app is already initialized to prevent duplicate errors
         if not firebase_admin._apps:
-            # Use the 'Service Account' credentials to gain full access
-            cred = credentials.Certificate(cert_path)
-            firebase_admin.initialize_app(cred)
+            # Load the service account key from the JSON file in your project folder
+            cred = credentials.Certificate("serviceAccountKey.json")
             
-        # This 'db' object is what we use to read/write data
+            # Initialize the Firebase app with your credentials
+            firebase_admin.initialize_app(cred)
+        
+        # Get a reference to the Firestore database client
         self.db = firestore.client()
+        print("✅ Firebase Connected Successfully!")
 
-    def add_transaction(self, uid, data):
+    def add_transaction(self, uid: str, transaction_data: dict):
         """
-        This function takes the parsed JSON from Gemini and saves it 
-        to the 'transactions' collection in Firestore.
+        Saves a single transaction under the correct user's document.
+        
+        Firestore Structure:
+        users (collection)
+          └── {uid} (document)
+                └── transactions (sub-collection)
+                      └── {auto-id} (document)
+                            ├── amount: 250
+                            ├── category: "food"
+                            ├── type: "expense"
+                            └── timestamp: 2025-07-10T...
         """
         try:
-            # We create a new document in the 'transactions' collection
-            # Using .document() without an ID generates a unique random ID
-            doc_ref = self.db.collection('transactions').document()
+            # Add a timestamp so we know WHEN the expense happened
+            transaction_data["timestamp"] = datetime.utcnow().isoformat()
+            transaction_data["uid"] = uid
             
-            # We add the User ID so Luniva can filter data for specific users
-            data['uid'] = uid
+            # Navigate to: users -> {uid} -> transactions -> (new document)
+            transaction_ref = (
+                self.db
+                .collection("users")        # Main collection
+                .document(uid)              # This specific user
+                .collection("transactions") # Their transactions sub-collection
+                .add(transaction_data)      # Add new document with auto-ID
+            )
             
-            # We add a server-side timestamp so we know exactly when this happened
-            data['created_at'] = firestore.SERVER_TIMESTAMP
-            
-            # Write the data to Firestore
-            doc_ref.set(data)
-            
-            print(f"✅ Success: Transaction saved with ID {doc_ref.id}")
-            return True
+            print(f"✅ Transaction saved for user {uid}: {transaction_data}")
+            return {"success": True, "data": transaction_data}
             
         except Exception as e:
-            print(f"❌ Error saving to database: {e}")
-            return False
+            print(f"❌ Error saving transaction: {e}")
+            return {"success": False, "error": str(e)}
+
+    def get_transactions(self, uid: str):
+        """
+        Retrieves ALL transactions for a specific user.
+        Useful for dashboard and reports later.
+        """
+        try:
+            # Get all documents from the user's transactions sub-collection
+            docs = (
+                self.db
+                .collection("users")
+                .document(uid)
+                .collection("transactions")
+                .order_by("timestamp", direction=firestore.Query.DESCENDING)
+                .stream()
+            )
+            
+            # Convert Firestore documents into a plain Python list
+            transactions = []
+            for doc in docs:
+                data = doc.to_dict()
+                data["id"] = doc.id  # Include the document ID
+                transactions.append(data)
+            
+            return transactions
+            
+        except Exception as e:
+            print(f"❌ Error fetching transactions: {e}")
+            return []
+
+    def get_budget_summary(self, uid: str):
+        """
+        Gets the user's manually set category budgets.
+        This is what the AI will reference to warn users.
+        (You'll use this in the Dashboard milestone M5)
+        """
+        try:
+            doc = (
+                self.db
+                .collection("users")
+                .document(uid)
+                .get()
+            )
+            
+            if doc.exists:
+                return doc.to_dict().get("budgets", {})
+            return {}
+            
+        except Exception as e:
+            print(f"❌ Error fetching budget: {e}")
+            return {}
+
+    def set_budget(self, uid: str, category: str, limit: float):
+        """
+        Allows users to set a spending limit for a category.
+        Example: Food budget = 5000 NPR
+        """
+        try:
+            self.db.collection("users").document(uid).set(
+                {"budgets": {category: limit}},
+                merge=True  # Don't overwrite other fields, just update this one
+            )
+            print(f"✅ Budget set: {category} = {limit} for user {uid}")
+            return {"success": True}
+            
+        except Exception as e:
+            print(f"❌ Error setting budget: {e}")
+            return {"success": False, "error": str(e)}
+
 
 # --- LOCAL TESTING BLOCK ---
+# Run: python database.py  to test connection independently
 if __name__ == "__main__":
-    # Test to see if you can manually push data to the shared DB
-    # Make sure you have 'serviceAccountKey.json' in your folder!
-    db_manager = TransactionDB()
+    print("Testing Firebase Connection...")
     
-    test_data = {
+    db = TransactionDB()
+    
+    # Test with a dummy user ID
+    test_uid = "test_user_123"
+    
+    # Test saving a transaction
+    print("\n--- Test: Adding Transaction ---")
+    result = db.add_transaction(test_uid, {
         "amount": 250,
         "category": "food",
-        "item": "momo",
         "type": "expense"
-    }
+    })
+    print(f"Result: {result}")
     
-    # Use a dummy UID for testing
-    db_manager.add_transaction("kashish_test_123", test_data)
+    # Test retrieving transactions
+    print("\n--- Test: Getting Transactions ---")
+    transactions = db.get_transactions(test_uid)
+    print(f"Found {len(transactions)} transactions")
+    for t in transactions:
+        print(f"  - {t}")
