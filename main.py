@@ -2,8 +2,6 @@
 from fastapi import FastAPI, Body, HTTPException
 from gemini_engine import BachatbotAI
 from database import TransactionDB
-from firebase_admin import auth
-from fastapi import Header
 import re
 import json
 
@@ -25,18 +23,14 @@ def read_root():
     }
 
 @app.post("/chat")
-async def chat_api(
-    payload: dict = Body(...), 
-    authorization: str = Header(None)  # Token comes in header
-):
-    # 1. Verify the token with Firebase
-    token = authorization.split(" ")[1]  # Remove "Bearer "
-    decoded = auth.verify_id_token(token)
-    
-    # 2. Extract UID safely (guaranteed real)
-    uid = decoded["uid"]
-    
-    
+async def chat_api(payload: dict = Body(...)):
+    """
+    Main chat endpoint.
+    Input:  {"message": "Momo khada 250 gayo", "uid": "user123"}
+    Output: {"reply": "...", "transaction_saved": true/false}
+    """
+    user_message = payload.get("message")
+    uid = payload.get("uid")
 
     # Validate input
     if not user_message:
