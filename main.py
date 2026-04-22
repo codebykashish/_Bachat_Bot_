@@ -131,12 +131,17 @@ async def get_user_transactions(authorization: str = Header(None)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/budget")
-async def set_budget(payload: dict = Body(...)):
+@app.post("/budget")
+async def set_budget(
+    payload: dict = Body(...),
+    authorization: str = Header(None)
+):
+    uid = get_uid_from_token(authorization)    
     """
     Set category budget for a user.
     Input: {"uid": "user123", "category": "food", "limit": 5000}
     """
-    uid = payload.get("uid")
+    
     category = payload.get("category")
     limit = payload.get("limit")
     
