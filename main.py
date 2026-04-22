@@ -17,6 +17,24 @@ app = FastAPI(
 ai = BachatbotAI()
 db = TransactionDB()
 
+# ---------------------------------------------------------
+# 🔐 TOKEN VERIFICATION FUNCTION
+# ---------------------------------------------------------
+def get_uid_from_token(authorization: str):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+
+    try:
+        scheme, token = authorization.split(" ")
+        if scheme.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid auth scheme")
+
+        decoded_token = firebase_auth.verify_id_token(token)
+        return decoded_token["uid"]
+
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
 @app.get("/")
 def read_root():
     return {
