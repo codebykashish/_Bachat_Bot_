@@ -43,14 +43,17 @@ def read_root():
     }
 
 @app.post("/chat")
-async def chat_api(payload: dict = Body(...)):
+async def chat_api(
+    payload: dict = Body(...),
+    authorization: str = Header(None)
+):
     """
     Main chat endpoint.
     Input:  {"message": "Momo khada 250 gayo", "uid": "user123"}
     Output: {"reply": "...", "transaction_saved": true/false}
     """
     user_message = payload.get("message")
-    uid = payload.get("uid")
+    uid = get_uid_from_token(authorization)
 
     # Validate input
     if not user_message:
