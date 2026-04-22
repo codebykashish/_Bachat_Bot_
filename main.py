@@ -150,3 +150,25 @@ async def set_budget(
     
     result = db.set_budget(uid, category, float(limit))
     return result
+
+
+@app.post("/complete-signup")
+async def complete_signup(
+    payload: dict = Body(...),
+    authorization: str = Header(None)
+):
+    uid = get_uid_from_token(authorization)
+
+    first_name = payload.get("first_name")
+    last_name = payload.get("last_name")
+    phone = payload.get("phone")
+
+    if not first_name or not last_name or not phone:
+        raise HTTPException(status_code=400, detail="Missing required fields")
+
+    result = db.create_user(uid, first_name, last_name, phone)
+
+    return {
+        "success": result["success"],
+        "message": "User profile created successfully"
+    }
