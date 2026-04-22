@@ -2,6 +2,8 @@
 from fastapi import FastAPI, Body, HTTPException
 from gemini_engine import BachatbotAI
 from database import TransactionDB
+from fastapi import Header
+from firebase_admin import auth as firebase_auth
 import re
 import json
 
