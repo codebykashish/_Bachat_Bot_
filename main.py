@@ -112,13 +112,15 @@ async def chat_api(
             "data": None
         }
 
-@app.get("/transactions/{uid}")
-async def get_user_transactions(uid: str):
+@app.get("/transactions")
+async def get_user_transactions(authorization: str = Header(None)):
+    
     """
     Get all transactions for a user.
     Useful for testing if data is actually being saved.
     """
     try:
+        uid = get_uid_from_token(authorization)
         transactions = db.get_transactions(uid)
         return {
             "uid": uid,
