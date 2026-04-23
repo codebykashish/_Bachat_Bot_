@@ -9,21 +9,3 @@ __pycache__/
 
 # Firebase private key (VERY IMPORTANT)
 serviceAccountKey.json
-
-# VS Code settings
-.vscode/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Virtual environment (if you create one later)
-venv/
-env/
-.venv/
-
-# Logs
-*.log
-
-# Testing files (optional)
-debug_test.py
