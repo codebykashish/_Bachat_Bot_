@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> pages = [
     const HomeContent(),
-    const CategoryItem(),
+    const Center(child: Text("Categories Page", style: TextStyle(fontSize: 24))),
     const Center(child: Text("Reports Page", style: TextStyle(fontSize: 24))),
     const Center(child: Text("Settings Page", style: TextStyle(fontSize: 24))),
   ];
