@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'categories_page.dart';
 import 'login_screen.dart';
 import 'auth_service.dart';
 import 'chatbot_page.dart';
