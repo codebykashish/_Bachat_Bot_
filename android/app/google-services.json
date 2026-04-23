@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "469930598106",
+    "firebase_url": "https://bachatbot-98145-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "bachatbot-98145",
+    "storage_bucket": "bachatbot-98145.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:469930598106:android:3cdd922240ceac3c9c0fe3",
+        "android_client_info": {
+          "package_name": "com.bachatbot.bachatbot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGuze8izfXmsudu6rpwS5sj3q3kiuxKNE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
